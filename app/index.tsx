@@ -231,10 +231,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
   },
-  subtitle: {
-    fontSize: 15,
-    color: "#64748B",
-  },
   searchRow: {
     flexDirection: "row",
     gap: 10,
@@ -303,11 +299,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     marginTop: 8,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1E293B",
   },
   statusText: {
     fontSize: 14,

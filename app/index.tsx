@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -14,8 +14,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { fetchWeatherInfo } from "../src/api/weather";
 import { CurrentWeatherType } from "../src/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const QUICK_CITIES = ["Baku", "London", "Tokyo", "New York"];
+const LAST_CITY_WEATHER_SEARCH_KEY = "LAST_WEATHER_CITY_KEY";
+const LAST_CITY_SEARCH_KEY = "LAST_CITY_KEY";
 
 export default function Home() {
   const [cityInput, setCityInput] = useState("");
@@ -24,8 +27,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleWeatherSearch = async (cityOverride?: string) => {
-    const query = (cityOverride ?? cityInput).trim();
+  const handleWeatherSearch = async (cityName?: string) => {
+    const query = (cityName ?? cityInput).trim();
 
     if (!query) {
       setError("Please enter a city name.");
@@ -45,6 +48,11 @@ export default function Home() {
       } else {
         setWeather(result);
         setSearchedCity(query);
+        AsyncStorage.setItem(LAST_CITY_SEARCH_KEY, query);
+        AsyncStorage.setItem(
+          LAST_CITY_WEATHER_SEARCH_KEY,
+          JSON.stringify(result),
+        );
       }
     } catch {
       setWeather(null);
@@ -54,6 +62,20 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+    (async () => {
+      const lastSearch = await AsyncStorage.getItem(
+        LAST_CITY_WEATHER_SEARCH_KEY,
+      );
+      const lastSearchCity = await AsyncStorage.getItem(LAST_CITY_SEARCH_KEY);
+      if (!lastSearch || !lastSearchCity) return;
+      let resultWeather: CurrentWeatherType = JSON.parse(lastSearch);
+      let resultCity: string = lastSearchCity ?? "";
+      setWeather(resultWeather);
+      setSearchedCity(resultCity);
+    })();
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -62,9 +84,6 @@ export default function Home() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Weather</Text>
-          <Text style={styles.subtitle}>
-            Search a city to see current conditions
-          </Text>
         </View>
 
         <View style={styles.searchRow}>
@@ -82,7 +101,6 @@ export default function Home() {
               value={cityInput}
               onChangeText={(text) => {
                 setCityInput(text);
-                if (error) setError(null);
               }}
               onSubmitEditing={() => handleWeatherSearch()}
               returnKeyType="search"
@@ -144,15 +162,7 @@ export default function Home() {
           </View>
         )}
 
-        {!loading && !error && !weather && (
-          <View style={styles.statusCard}>
-            <Ionicons name="partly-sunny-outline" size={56} color="#94A3B8" />
-            <Text style={styles.emptyTitle}>No city selected</Text>
-            <Text style={styles.statusText}>
-              Type a city name above or pick one of the quick options.
-            </Text>
-          </View>
-        )}
+
 
         {!loading && !error && weather && (
           <View style={styles.weatherCard}>
@@ -177,13 +187,21 @@ export default function Home() {
 
             <View style={styles.metricsRow}>
               <View style={styles.metricBox}>
-                <Ionicons name="thermometer-outline" size={22} color="#2563EB" />
+                <Ionicons
+                  name="thermometer-outline"
+                  size={22}
+                  color="#2563EB"
+                />
                 <Text style={styles.metricLabel}>Feels Like</Text>
                 <Text style={styles.metricValue}>{weather.feelsLikeC}°C</Text>
               </View>
 
               <View style={styles.metricBox}>
-                <Ionicons name="speedometer-outline" size={22} color="#2563EB" />
+                <Ionicons
+                  name="speedometer-outline"
+                  size={22}
+                  color="#2563EB"
+                />
                 <Text style={styles.metricLabel}>Wind Speed</Text>
                 <Text style={styles.metricValue}>
                   {weather.windspeedKMH} km/h
@@ -200,7 +218,6 @@ export default function Home() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F1F5F9",
   },
   container: {
     padding: 20,
@@ -213,7 +230,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#0F172A",
   },
   subtitle: {
     fontSize: 15,
@@ -244,7 +260,7 @@ const styles = StyleSheet.create({
     color: "#0F172A",
   },
   searchButton: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "#534d0a",
     height: 48,
     paddingHorizontal: 18,
     borderRadius: 14,

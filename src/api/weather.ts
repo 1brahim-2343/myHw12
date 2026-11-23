@@ -16,7 +16,6 @@ export async function fetchWeatherInfo(
     const data = await response.json();
     let current_condition = data.current_condition[0];
     if (!current_condition) return undefined;
-    console.log(current_condition);
 
     return {
       temperatureC: current_condition.temp_C,
